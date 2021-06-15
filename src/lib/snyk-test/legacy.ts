@@ -274,6 +274,12 @@ export interface TestDependenciesResponse {
   meta: TestDepGraphMeta;
 }
 
+export interface ResolveAndTestFactsResponse {
+  token: string;
+  result: TestDependenciesResult;
+  meta: TestDepGraphMeta;
+}
+
 export interface Ignores {
   [path: string]: {
     paths: string[][];
