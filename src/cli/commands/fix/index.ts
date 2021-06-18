@@ -28,7 +28,7 @@ interface FixOptions {
 }
 async function fix(...args: MethodArgs): Promise<string> {
   const { options: rawOptions, paths } = await processCommandArgs<FixOptions>(
-    ...args,
+    'fix', ...args
   );
   const options = setDefaultTestOptions<FixOptions>(rawOptions);
   debug(options);

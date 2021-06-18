@@ -17,6 +17,7 @@ import {
   AuthFailedError,
   DockerImageNotFoundError,
   MonitorError,
+  InternalServerError,
 } from '../errors';
 import {
   Ecosystem,
@@ -52,8 +53,7 @@ export async function monitorEcosystem(
       ) {
         throw new DockerImageNotFoundError(path);
       }
-
-      throw error;
+      throw new InternalServerError("Scanning failed. Please make sure you are using the right parameters. If the issue still persists, please contact snyk support.");
     } finally {
       spinner.clearAll();
     }
