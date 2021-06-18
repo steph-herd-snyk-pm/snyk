@@ -26,7 +26,7 @@ import { updateCheck } from '../lib/updater';
 import {
   MissingTargetFileError,
   FileFlagBadInputError,
-  OptionMissingErrorError,
+  MissingOptionError,
   UnsupportedOptionCombinationError,
   ExcludeFlagBadInputError,
   CustomError,
@@ -393,7 +393,7 @@ function validateUnsupportedOptionCombinations(
 
   if (options.exclude) {
     if (!(options.allProjects || options.yarnWorkspaces)) {
-      throw new OptionMissingErrorError('--exclude', [
+      throw new MissingOptionError('--exclude', [
         '--yarn-workspaces',
         '--all-projects',
       ]);
@@ -439,7 +439,7 @@ function validateUnsupportedSarifCombinations(args) {
     args.options['docker'] &&
     !args.options['file']
   ) {
-    throw new OptionMissingErrorError('sarif', ['--file']);
+    throw new MissingOptionError('sarif', ['--file']);
   }
 
   if (
@@ -447,7 +447,7 @@ function validateUnsupportedSarifCombinations(args) {
     args.options['docker'] &&
     !args.options['file']
   ) {
-    throw new OptionMissingErrorError('sarif-file-output', ['--file']);
+    throw new MissingOptionError('sarif-file-output', ['--file']);
   }
 }
 
