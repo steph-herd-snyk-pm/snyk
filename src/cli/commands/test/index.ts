@@ -29,6 +29,7 @@ import {
   summariseErrorResults,
   summariseVulnerableResults,
 } from './formatters';
+import { InternalServerError } from '../../../lib/errors';
 import * as utils from './utils';
 import {
   getIacDisplayedOutput,
@@ -265,6 +266,11 @@ async function test(...args: MethodArgs): Promise<TestCommandResult> {
     error.code = errorResults[0].code;
     error.userMessage = errorResults[0].userMessage;
     error.strCode = errorResults[0].strCode;
+    if (options.docker) {
+      throw new InternalServerError(
+        'Scanning failed. Please make sure you are using the right parameters. If the issue still persists, please contact snyk support.',
+      );
+    }
     throw error;
   }
 
