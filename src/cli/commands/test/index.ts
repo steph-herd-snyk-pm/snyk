@@ -63,7 +63,10 @@ const SEPARATOR = '\n-------------------------------------------------------\n';
 // TODO: avoid using `as any` whenever it's possible
 
 async function test(...args: MethodArgs): Promise<TestCommandResult> {
-  const { options: originalOptions, paths } = processCommandArgs('test', ...args);
+  const { options: originalOptions, paths } = processCommandArgs(
+    'test',
+    ...args,
+  );
   const options = setDefaultTestOptions(originalOptions);
   validateTestOptions(options);
   validateCredentials(options);

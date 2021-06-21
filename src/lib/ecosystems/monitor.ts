@@ -53,7 +53,9 @@ export async function monitorEcosystem(
       ) {
         throw new DockerImageNotFoundError(path);
       }
-      throw new InternalServerError("Scanning failed. Please make sure you are using the right parameters. If the issue still persists, please contact snyk support.");
+      throw new InternalServerError(
+        'Scanning failed. Please make sure you are using the right parameters. If the issue still persists, please contact snyk support.',
+      );
     } finally {
       spinner.clearAll();
     }

@@ -2,7 +2,8 @@ import { Options } from '../../lib/types';
 import { MissingArgError } from '../../lib/errors';
 
 export function processCommandArgs<CommandOptions>(
-  method, ...args
+  method,
+  ...args
 ): { paths: string[]; options: Options & CommandOptions } {
   let options = ({} as any) as Options & CommandOptions;
 
