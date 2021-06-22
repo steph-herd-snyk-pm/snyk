@@ -10,6 +10,7 @@ import { FixHandlerResultByPlugin } from './plugins/types';
 
 import { EntityToFix, ErrorsByEcoSystem, FixedMeta, FixOptions } from './types';
 import { convertErrorToUserMessage } from './lib/errors/error-to-user-message';
+import { partitionByVulnerable } from './partition-by-vulnerable';
 export { EntityToFix } from './types';
 
 const debug = debugLib('snyk-fix:main');
@@ -30,7 +31,8 @@ export async function fix(
   const spinner = ora({ isSilent: options.quiet, stream: process.stdout });
 
   let resultsByPlugin: FixHandlerResultByPlugin = {};
-  const entitiesPerType = groupEntitiesPerScanType(entities);
+  const { vulnerable, notVulnerable } = await partitionByVulnerable(entities);
+  const entitiesPerType = groupEntitiesPerScanType(vulnerable);
   const exceptionsByScanType: ErrorsByEcoSystem = {};
   await pMap(
     Object.keys(entitiesPerType),
@@ -52,6 +54,7 @@ export async function fix(
     },
   );
   const fixSummary = await outputFormatter.showResultsSummary(
+    notVulnerable,
     resultsByPlugin,
     exceptionsByScanType,
   );

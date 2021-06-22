@@ -53,6 +53,11 @@ exports[`generateUnresolvedSummary has failed upgrades & unsupported 1`] = `
   ✖ npm is not supported"
 `;
 
+exports[`showResultsSummary called with no vulnerable projects to fix 1`] = `
+"
+ ✖ No successful fixes"
+`;
+
 exports[`showResultsSummary called with nothing to fix 1`] = `
 "
  ✖ No successful fixes"
@@ -88,6 +93,28 @@ Summary:
 Re-run in debug mode to see more information: DEBUG=*snyk* <COMMAND>. If the issue persists contact support@snyk.io"
 `;
 
+exports[`showResultsSummary has unresolved & not vulnerable only 1`] = `
+"
+ ✖ No successful fixes
+
+Unresolved items:
+
+  package.json
+  ✖ npm is not supported
+
+Summary:
+
+  1 items were not fixed
+  0 items were successfully fixed
+  1 items were not vulnerable
+  1 total issues: 1 High
+  1 fixable issues
+  0 fixed issues
+
+
+Re-run in debug mode to see more information: DEBUG=*snyk* <COMMAND>. If the issue persists contact support@snyk.io"
+`;
+
 exports[`showResultsSummary has unresolved only 1`] = `
 "
  ✖ No successful fixes
@@ -101,6 +128,7 @@ Summary:
 
   1 items were not fixed
   0 items were successfully fixed
+  1 items were not vulnerable
   1 total issues: 1 High
   1 fixable issues
   0 fixed issues

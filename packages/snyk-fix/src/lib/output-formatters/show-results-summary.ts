@@ -1,7 +1,7 @@
 import * as chalk from 'chalk';
 
 import { FixHandlerResultByPlugin } from '../../plugins/types';
-import { ErrorsByEcoSystem, Issue, TestResult } from '../../types';
+import { EntityToFix, ErrorsByEcoSystem, Issue, TestResult } from '../../types';
 import { contactSupportMessage, reTryMessage } from '../errors/common';
 import { convertErrorToUserMessage } from '../errors/error-to-user-message';
 import { hasFixableIssues } from '../issues/fixable-issues';
@@ -12,6 +12,7 @@ import { formatUnresolved } from './format-unresolved-item';
 export const PADDING_SPACE = '  '; // 2 spaces
 
 export async function showResultsSummary(
+  notVulnerable: EntityToFix[],
   resultsByPlugin: FixHandlerResultByPlugin,
   exceptionsByScanType: ErrorsByEcoSystem,
 ): Promise<string> {
@@ -34,12 +35,17 @@ export async function showResultsSummary(
   const fixedIssuesSummary = `${chalk.bold(
     calculateFixedIssues(resultsByPlugin),
   )} fixed issues`;
+
+  const notVulnerableSummary =
+    notVulnerable.length > 0
+      ? `\n${PADDING_SPACE}${notVulnerable.length} items were not vulnerable`
+      : '';
   const getHelpText = chalk.red(`\n${reTryMessage}. ${contactSupportMessage}`);
   return `\n${successfulFixesSummary}${
     unresolvedSummary ? `\n\n${unresolvedSummary}` : ''
   }${
     unresolvedCount || changedCount
-      ? `\n\n${overallSummary}\n${vulnsSummary}\n${PADDING_SPACE}${fixedIssuesSummary}`
+      ? `\n\n${overallSummary}${notVulnerableSummary}\n${vulnsSummary}\n${PADDING_SPACE}${fixedIssuesSummary}`
       : ''
   }${unresolvedSummary ? `\n\n${getHelpText}` : ''}`;
 }

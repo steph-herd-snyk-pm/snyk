@@ -332,7 +332,11 @@ describe('showResultsSummary', () => {
       },
     };
 
-    const res = await showResultsSummary(resultsByPlugin, exceptionsByScanType);
+    const res = await showResultsSummary(
+      [],
+      resultsByPlugin,
+      exceptionsByScanType,
+    );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
   it('has unresolved only', async () => {
@@ -354,8 +358,41 @@ describe('showResultsSummary', () => {
         userMessage: 'npm is not supported',
       },
     };
+    const notVulnerable = generateEntityToFix('pip', '', JSON.stringify({}));
 
-    const res = await showResultsSummary(resultsByPlugin, exceptionsByScanType);
+    const res = await showResultsSummary(
+      [notVulnerable],
+      resultsByPlugin,
+      exceptionsByScanType,
+    );
+    expect(stripAnsi(res)).toMatchSnapshot();
+  });
+  it('has unresolved & not vulnerable only', async () => {
+    const entityFailed = generateEntityToFix(
+      'npm',
+      'package.json',
+      JSON.stringify({}),
+    );
+    const resultsByPlugin: FixHandlerResultByPlugin = {
+      python: {
+        succeeded: [],
+        failed: [],
+        skipped: [],
+      },
+    };
+    const exceptionsByScanType: ErrorsByEcoSystem = {
+      python: {
+        originals: [entityFailed],
+        userMessage: 'npm is not supported',
+      },
+    };
+    const notVulnerable = generateEntityToFix('pip', '', JSON.stringify({}));
+
+    const res = await showResultsSummary(
+      [notVulnerable],
+      resultsByPlugin,
+      exceptionsByScanType,
+    );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
   it('called with nothing to fix', async () => {
@@ -368,7 +405,30 @@ describe('showResultsSummary', () => {
     };
     const exceptionsByScanType: ErrorsByEcoSystem = {};
 
-    const res = await showResultsSummary(resultsByPlugin, exceptionsByScanType);
+    const res = await showResultsSummary(
+      [],
+      resultsByPlugin,
+      exceptionsByScanType,
+    );
+    expect(stripAnsi(res)).toMatchSnapshot();
+  });
+
+  it('called with no vulnerable projects to fix', async () => {
+    const resultsByPlugin: FixHandlerResultByPlugin = {
+      python: {
+        succeeded: [],
+        failed: [],
+        skipped: [],
+      },
+    };
+    const exceptionsByScanType: ErrorsByEcoSystem = {};
+    const notVulnerable = generateEntityToFix('pip', '', JSON.stringify({}));
+
+    const res = await showResultsSummary(
+      [notVulnerable],
+      resultsByPlugin,
+      exceptionsByScanType,
+    );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
 });
