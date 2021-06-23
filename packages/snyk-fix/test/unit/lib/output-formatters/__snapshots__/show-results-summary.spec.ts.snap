@@ -8,32 +8,66 @@ exports[`formatIssueCountBySeverity all vuln severities absent 1`] = `""`;
 
 exports[`formatIssueCountBySeverity all vuln severities present 1`] = `"1 Critical | 3 High | 15 Medium | 300 Low"`;
 
-exports[`generateFixedAndFailedSummary has failed only 1`] = `
-"Summary:
-
-  1 items were not fixed
-  0 items were successfully fixed"
-`;
-
-exports[`generateFixedAndFailedSummary has fixed & failed 1`] = `
-"Summary:
-
-  1 items were not fixed
-  1 items were successfully fixed"
-`;
-
-exports[`generateFixedAndFailedSummary has fixed only 1`] = `
+exports[`generateOverallSummary 100% not vulnerable 1`] = `
 "Summary:
 
   0 items were not fixed
-  1 items were successfully fixed"
+  0 items were successfully fixed
+  1 items were not vulnerable
+  0 total issues
+  0 fixable issues
+  0 fixed issues"
 `;
 
-exports[`generateFixedAndFailedSummary has skipped & failed & plugin errors 1`] = `
+exports[`generateOverallSummary has failed only 1`] = `
+"Summary:
+
+  1 items were not fixed
+  0 items were successfully fixed
+  1 total issues: 1 High
+  1 fixable issues
+  0 fixed issues"
+`;
+
+exports[`generateOverallSummary has fixed & failed & not vulnerable 1`] = `
+"Summary:
+
+  1 items were not fixed
+  1 items were successfully fixed
+  1 items were not vulnerable
+  2 total issues: 2 High
+  2 fixable issues
+  1 fixed issues"
+`;
+
+exports[`generateOverallSummary has fixed & failed 1`] = `
+"Summary:
+
+  1 items were not fixed
+  1 items were successfully fixed
+  2 total issues: 2 High
+  2 fixable issues
+  1 fixed issues"
+`;
+
+exports[`generateOverallSummary has fixed only 1`] = `
+"Summary:
+
+  0 items were not fixed
+  1 items were successfully fixed
+  1 total issues: 1 High
+  1 fixable issues
+  1 fixed issues"
+`;
+
+exports[`generateOverallSummary has skipped & failed & plugin errors 1`] = `
 "Summary:
 
   2 items were not fixed
-  1 items were successfully fixed"
+  1 items were successfully fixed
+  3 total issues: 3 High
+  3 fixable issues
+  1 fixed issues"
 `;
 
 exports[`generateSuccessfulFixesSummary has fixed & failed 1`] = `
@@ -47,7 +81,9 @@ exports[`generateSuccessfulFixesSummary has fixed & failed 1`] = `
 `;
 
 exports[`generateUnresolvedSummary has failed upgrades & unsupported 1`] = `
-"Unresolved items:
+"
+
+Unresolved items:
 
   package.json
   ✖ npm is not supported"
@@ -55,12 +91,21 @@ exports[`generateUnresolvedSummary has failed upgrades & unsupported 1`] = `
 
 exports[`showResultsSummary called with no vulnerable projects to fix 1`] = `
 "
- ✖ No successful fixes"
+✔ No vulnerable items to fix
+
+Summary:
+
+  0 items were not fixed
+  0 items were successfully fixed
+  1 items were not vulnerable
+  0 total issues
+  0 fixable issues
+  0 fixed issues"
 `;
 
 exports[`showResultsSummary called with nothing to fix 1`] = `
 "
- ✖ No successful fixes"
+✔ Nothing to fix"
 `;
 
 exports[`showResultsSummary has failed, skipped, successful & plugin errors 1`] = `

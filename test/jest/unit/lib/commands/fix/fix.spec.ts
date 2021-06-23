@@ -248,7 +248,7 @@ describe('snyk fix (functional tests)', () => {
         dryRun: true,
         quiet: true,
       });
-      expect(stripAnsi(res.message)).toMatch('No successful fixes');
+      expect(stripAnsi(res.message)).toMatch('✔ Nothing to fix');
       expect(stdoutMessages).toEqual('');
       expect(stderrMessages).toEqual('');
     },
@@ -282,7 +282,7 @@ describe('snyk fix (functional tests)', () => {
         dryRun: true,
         quiet: true,
       });
-      expect(stripAnsi(res)).toMatch('No successful fixes');
+      expect(stripAnsi(res)).toMatch('✔ No vulnerable items to fix');
       expect(stdoutMessages).toEqual('');
       expect(stderrMessages).toEqual('');
     },

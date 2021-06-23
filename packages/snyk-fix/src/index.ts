@@ -30,20 +30,23 @@ export async function fix(
 }> {
   const spinner = ora({ isSilent: options.quiet, stream: process.stdout });
 
-  let resultsByPlugin: FixHandlerResultByPlugin = {};
-  const { vulnerable, notVulnerable } = await partitionByVulnerable(entities);
+  let fixed: FixHandlerResultByPlugin = {};
+  const {
+    vulnerable,
+    notVulnerable: nothingToFix,
+  } = await partitionByVulnerable(entities);
   const entitiesPerType = groupEntitiesPerScanType(vulnerable);
-  const exceptionsByScanType: ErrorsByEcoSystem = {};
+  const exceptions: ErrorsByEcoSystem = {};
   await pMap(
     Object.keys(entitiesPerType),
     async (scanType) => {
       try {
         const fixPlugin = loadPlugin(scanType);
         const results = await fixPlugin(entitiesPerType[scanType], options);
-        resultsByPlugin = { ...resultsByPlugin, ...results };
+        fixed = { ...fixed, ...results };
       } catch (e) {
         debug(`Failed to processes ${scanType}`, e);
-        exceptionsByScanType[scanType] = {
+        exceptions[scanType] = {
           originals: entitiesPerType[scanType],
           userMessage: convertErrorToUserMessage(e),
         };
@@ -54,11 +57,12 @@ export async function fix(
     },
   );
   const fixSummary = await outputFormatter.showResultsSummary(
-    notVulnerable,
-    resultsByPlugin,
-    exceptionsByScanType,
+    nothingToFix,
+    fixed,
+    exceptions,
+    entities.length,
   );
-  const meta = extractMeta(resultsByPlugin, exceptionsByScanType);
+  const meta = extractMeta(fixed, exceptions);
 
   spinner.start();
   if (meta.fixed > 0) {
@@ -71,8 +75,8 @@ export async function fix(
   }
 
   return {
-    results: resultsByPlugin,
-    exceptions: exceptionsByScanType,
+    results: fixed,
+    exceptions,
     fixSummary: options.stripAnsi ? stripAnsi(fixSummary) : fixSummary,
     meta,
   };

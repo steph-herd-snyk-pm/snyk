@@ -4,7 +4,7 @@ import {
   ERROR_CODES,
 } from '../../../../src/lib/errors/custom-error';
 import {
-  generateFixedAndFailedSummary,
+  generateOverallSummary,
   generateSuccessfulFixesSummary,
   generateUnresolvedSummary,
   formatIssueCountBySeverity,
@@ -14,7 +14,7 @@ import { FixHandlerResultByPlugin } from '../../../../src/plugins/types';
 import { ErrorsByEcoSystem } from '../../../../src/types';
 import { generateEntityToFix } from '../../../helpers/generate-entity-to-fix';
 
-describe('generateFixedAndFailedSummary', () => {
+describe('generateOverallSummary', () => {
   it('has fixed & failed', async () => {
     const entity = generateEntityToFix(
       'pip',
@@ -49,7 +49,63 @@ describe('generateFixedAndFailedSummary', () => {
         skipped: [],
       },
     };
-    const res = await generateFixedAndFailedSummary(resultsByPlugin, {});
+    const res = await generateOverallSummary(resultsByPlugin, {}, []);
+    expect(stripAnsi(res.summary)).toMatchSnapshot();
+  });
+
+  it('has fixed & failed & not vulnerable', async () => {
+    const entity = generateEntityToFix(
+      'pip',
+      'requirements.txt',
+      JSON.stringify({}),
+    );
+    const entityFailed = generateEntityToFix(
+      'pip',
+      'bad.txt',
+      JSON.stringify({}),
+    );
+    const resultsByPlugin: FixHandlerResultByPlugin = {
+      python: {
+        succeeded: [
+          {
+            original: entity,
+            changes: [
+              {
+                success: true,
+                userMessage: 'Upgraded Django from 1.6.1 to 2.0.1',
+                issueIds: ['vuln-2'],
+              },
+            ],
+          },
+        ],
+        failed: [
+          {
+            original: entityFailed,
+            error: new CustomError('Failed!', ERROR_CODES.MissingFileName),
+          },
+        ],
+        skipped: [],
+      },
+    };
+    const notVulnerable = generateEntityToFix('pip', '', JSON.stringify({}));
+    const res = await generateOverallSummary(resultsByPlugin, {}, [
+      notVulnerable,
+    ]);
+    expect(stripAnsi(res.summary)).toMatchSnapshot();
+  });
+
+  it('100% not vulnerable', async () => {
+    const resultsByPlugin: FixHandlerResultByPlugin = {
+      python: {
+        succeeded: [],
+        failed: [],
+        skipped: [],
+      },
+    };
+    const notVulnerable = generateEntityToFix('pip', '', JSON.stringify({}));
+    const res = await generateOverallSummary(resultsByPlugin, {}, [
+      notVulnerable,
+    ]);
     expect(stripAnsi(res.summary)).toMatchSnapshot();
   });
 
@@ -77,7 +133,7 @@ describe('generateFixedAndFailedSummary', () => {
         skipped: [],
       },
     };
-    const res = await generateFixedAndFailedSummary(resultsByPlugin, {});
+    const res = await generateOverallSummary(resultsByPlugin, {}, []);
     expect(stripAnsi(res.summary)).toMatchSnapshot();
     expect(res.count).toEqual(1);
   });
@@ -100,7 +156,7 @@ describe('generateFixedAndFailedSummary', () => {
         skipped: [],
       },
     };
-    const res = await generateFixedAndFailedSummary(resultsByPlugin, {});
+    const res = await generateOverallSummary(resultsByPlugin, {}, []);
     expect(stripAnsi(res.summary)).toMatchSnapshot();
     expect(res.count).toEqual(1);
   });
@@ -146,7 +202,7 @@ describe('generateFixedAndFailedSummary', () => {
         ],
       },
     };
-    const res = await generateFixedAndFailedSummary(resultsByPlugin, {});
+    const res = await generateOverallSummary(resultsByPlugin, {}, []);
     expect(stripAnsi(res.summary)).toMatchSnapshot();
     expect(res.count).toEqual(3);
   });
@@ -336,6 +392,7 @@ describe('showResultsSummary', () => {
       [],
       resultsByPlugin,
       exceptionsByScanType,
+      3,
     );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
@@ -364,6 +421,7 @@ describe('showResultsSummary', () => {
       [notVulnerable],
       resultsByPlugin,
       exceptionsByScanType,
+      2,
     );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
@@ -392,6 +450,7 @@ describe('showResultsSummary', () => {
       [notVulnerable],
       resultsByPlugin,
       exceptionsByScanType,
+      2,
     );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
@@ -409,6 +468,7 @@ describe('showResultsSummary', () => {
       [],
       resultsByPlugin,
       exceptionsByScanType,
+      0,
     );
     expect(stripAnsi(res)).toMatchSnapshot();
   });
@@ -428,6 +488,7 @@ describe('showResultsSummary', () => {
       [notVulnerable],
       resultsByPlugin,
       exceptionsByScanType,
+      1,
     );
     expect(stripAnsi(res)).toMatchSnapshot();
   });

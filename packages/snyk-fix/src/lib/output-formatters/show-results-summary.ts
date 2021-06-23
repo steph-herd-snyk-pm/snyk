@@ -12,53 +12,49 @@ import { formatUnresolved } from './format-unresolved-item';
 export const PADDING_SPACE = '  '; // 2 spaces
 
 export async function showResultsSummary(
-  notVulnerable: EntityToFix[],
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+  nothingToFix: EntityToFix[],
+  fixed: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
+  total: number,
 ): Promise<string> {
-  const successfulFixesSummary = generateSuccessfulFixesSummary(
-    resultsByPlugin,
-  );
+  const successfulFixesSummary = generateSuccessfulFixesSummary(fixed);
   const {
     summary: unresolvedSummary,
     count: unresolvedCount,
-  } = generateUnresolvedSummary(resultsByPlugin, exceptionsByScanType);
+  } = generateUnresolvedSummary(fixed, exceptions);
   const {
     summary: overallSummary,
     count: changedCount,
-  } = generateFixedAndFailedSummary(resultsByPlugin, exceptionsByScanType);
+  } = generateOverallSummary(fixed, exceptions, nothingToFix);
 
-  const vulnsSummary = generateIssueSummary(
-    resultsByPlugin,
-    exceptionsByScanType,
-  );
-  const fixedIssuesSummary = `${chalk.bold(
-    calculateFixedIssues(resultsByPlugin),
-  )} fixed issues`;
-
-  const notVulnerableSummary =
-    notVulnerable.length > 0
-      ? `\n${PADDING_SPACE}${notVulnerable.length} items were not vulnerable`
-      : '';
   const getHelpText = chalk.red(`\n${reTryMessage}. ${contactSupportMessage}`);
-  return `\n${successfulFixesSummary}${
-    unresolvedSummary ? `\n\n${unresolvedSummary}` : ''
-  }${
-    unresolvedCount || changedCount
-      ? `\n\n${overallSummary}${notVulnerableSummary}\n${vulnsSummary}\n${PADDING_SPACE}${fixedIssuesSummary}`
-      : ''
+
+  // called without any `snyk test` results
+  if (total === 0) {
+    return `\n${chalk.green('✔ Nothing to fix')}`;
+  }
+
+  // 100% not vulnerable and had no errors/unsupported
+  if (nothingToFix.length === total && unresolvedCount === 0) {
+    return `\n${chalk.green(
+      '✔ No vulnerable items to fix',
+    )}\n\n${overallSummary}`;
+  }
+
+  return `\n${successfulFixesSummary}${unresolvedSummary}${
+    unresolvedCount || changedCount ? `\n\n${overallSummary}` : ''
   }${unresolvedSummary ? `\n\n${getHelpText}` : ''}`;
 }
 
 export function generateSuccessfulFixesSummary(
-  resultsByPlugin: FixHandlerResultByPlugin,
+  fixed: FixHandlerResultByPlugin,
 ): string {
   const sectionTitle = 'Successful fixes:';
   const formattedTitleHeader = `${chalk.bold(sectionTitle)}`;
   let summary = '';
 
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    const fixedSuccessfully = resultsByPlugin[plugin].succeeded;
+  for (const plugin of Object.keys(fixed)) {
+    const fixedSuccessfully = fixed[plugin].succeeded;
     if (fixedSuccessfully.length > 0) {
       summary +=
         '\n\n' +
@@ -74,16 +70,16 @@ export function generateSuccessfulFixesSummary(
 }
 
 export function generateUnresolvedSummary(
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+  fixed: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
 ): { summary: string; count: number } {
   const title = 'Unresolved items:';
   const formattedTitle = `${chalk.bold(title)}`;
   let summary = '';
   let count = 0;
 
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    const skipped = resultsByPlugin[plugin].skipped;
+  for (const plugin of Object.keys(fixed)) {
+    const skipped = fixed[plugin].skipped;
     if (skipped.length > 0) {
       count += skipped.length;
       summary +=
@@ -92,7 +88,7 @@ export function generateUnresolvedSummary(
           .map((s) => formatUnresolved(s.original, s.userMessage))
           .join('\n\n');
     }
-    const failed = resultsByPlugin[plugin].failed;
+    const failed = fixed[plugin].failed;
     if (failed.length > 0) {
       count += failed.length;
       summary +=
@@ -109,9 +105,9 @@ export function generateUnresolvedSummary(
     }
   }
 
-  if (Object.keys(exceptionsByScanType).length) {
-    for (const ecosystem of Object.keys(exceptionsByScanType)) {
-      const unresolved = exceptionsByScanType[ecosystem];
+  if (Object.keys(exceptions).length) {
+    for (const ecosystem of Object.keys(exceptions)) {
+      const unresolved = exceptions[ecosystem];
       count += unresolved.originals.length;
       summary +=
         '\n\n' +
@@ -121,46 +117,50 @@ export function generateUnresolvedSummary(
     }
   }
   if (summary) {
-    return { summary: formattedTitle + summary, count };
+    return { summary: `\n\n${formattedTitle}${summary}`, count };
   }
   return { summary: '', count: 0 };
 }
 
-export function generateFixedAndFailedSummary(
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+export function generateOverallSummary(
+  fixedResults: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
+  nothingToFix: EntityToFix[],
 ): { summary: string; count: number } {
   const sectionTitle = 'Summary:';
   const formattedTitleHeader = `${chalk.bold(sectionTitle)}`;
-  const fixed = calculateFixed(resultsByPlugin);
-  const failed = calculateFailed(resultsByPlugin, exceptionsByScanType);
+  const fixed = calculateFixed(fixedResults);
+  const failed = calculateFailed(fixedResults, exceptions);
+
+  const vulnsSummary = generateIssueSummary(fixedResults, exceptions);
+
+  const notVulnerableSummary =
+    nothingToFix.length > 0
+      ? `\n${PADDING_SPACE}${nothingToFix.length} items were not vulnerable`
+      : '';
 
   return {
     summary: `${formattedTitleHeader}\n\n${PADDING_SPACE}${chalk.bold.red(
       failed,
     )} items were not fixed\n${PADDING_SPACE}${chalk.green.bold(
       fixed,
-    )} items were successfully fixed`,
+    )} items were successfully fixed${notVulnerableSummary}\n${vulnsSummary}`,
     count: fixed + failed,
   };
 }
 
-export function calculateFixed(
-  resultsByPlugin: FixHandlerResultByPlugin,
-): number {
+export function calculateFixed(fixedResults: FixHandlerResultByPlugin): number {
   let fixed = 0;
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    fixed += resultsByPlugin[plugin].succeeded.length;
+  for (const plugin of Object.keys(fixedResults)) {
+    fixed += fixedResults[plugin].succeeded.length;
   }
   return fixed;
 }
 
-export function calculateFixedIssues(
-  resultsByPlugin: FixHandlerResultByPlugin,
-): number {
+export function calculateFixedIssues(fixed: FixHandlerResultByPlugin): number {
   const fixedIssues: string[] = [];
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    for (const entity of resultsByPlugin[plugin].succeeded) {
+  for (const plugin of Object.keys(fixed)) {
+    for (const entity of fixed[plugin].succeeded) {
       // count unique vulns fixed per scanned entity
       // some fixed may need to be made in multiple places
       // and would count multiple times otherwise.
@@ -178,18 +178,18 @@ export function calculateFixedIssues(
 }
 
 export function calculateFailed(
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+  fixed: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
 ): number {
   let failed = 0;
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    const results = resultsByPlugin[plugin];
+  for (const plugin of Object.keys(fixed)) {
+    const results = fixed[plugin];
     failed += results.failed.length + results.skipped.length;
   }
 
-  if (Object.keys(exceptionsByScanType).length) {
-    for (const ecosystem of Object.keys(exceptionsByScanType)) {
-      const unresolved = exceptionsByScanType[ecosystem];
+  if (Object.keys(exceptions).length) {
+    for (const ecosystem of Object.keys(exceptions)) {
+      const unresolved = exceptions[ecosystem];
       failed += unresolved.originals.length;
     }
   }
@@ -261,13 +261,10 @@ export function getSeveritiesColour(severity: string) {
 }
 
 export function generateIssueSummary(
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+  fixed: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
 ): string {
-  const testResults: TestResult[] = getTestResults(
-    resultsByPlugin,
-    exceptionsByScanType,
-  );
+  const testResults: TestResult[] = getTestResults(fixed, exceptions);
 
   const issueData = testResults.map((i) => i.issuesData);
   const bySeverity = getIssueCountBySeverity(issueData);
@@ -293,24 +290,28 @@ export function generateIssueSummary(
   const { count: fixableCount } = hasFixableIssues(testResults);
   const fixableIssues = `${chalk.bold(fixableCount)} fixable issues`;
 
-  return `${PADDING_SPACE}${totalIssues}\n${PADDING_SPACE}${fixableIssues}`;
+  const fixedIssuesSummary = `${chalk.bold(
+    calculateFixedIssues(fixed),
+  )} fixed issues`;
+
+  return `${PADDING_SPACE}${totalIssues}\n${PADDING_SPACE}${fixableIssues}\n${PADDING_SPACE}${fixedIssuesSummary}`;
 }
 
 function getTestResults(
-  resultsByPlugin: FixHandlerResultByPlugin,
-  exceptionsByScanType: ErrorsByEcoSystem,
+  fixed: FixHandlerResultByPlugin,
+  exceptions: ErrorsByEcoSystem,
 ): TestResult[] {
   const testResults: TestResult[] = [];
-  for (const plugin of Object.keys(resultsByPlugin)) {
-    const { skipped, failed, succeeded } = resultsByPlugin[plugin];
+  for (const plugin of Object.keys(fixed)) {
+    const { skipped, failed, succeeded } = fixed[plugin];
     testResults.push(...skipped.map((i) => i.original.testResult));
     testResults.push(...failed.map((i) => i.original.testResult));
     testResults.push(...succeeded.map((i) => i.original.testResult));
   }
 
-  if (Object.keys(exceptionsByScanType).length) {
-    for (const ecosystem of Object.keys(exceptionsByScanType)) {
-      const unresolved = exceptionsByScanType[ecosystem];
+  if (Object.keys(exceptions).length) {
+    for (const ecosystem of Object.keys(exceptions)) {
+      const unresolved = exceptions[ecosystem];
       testResults.push(...unresolved.originals.map((i) => i.testResult));
     }
   }
